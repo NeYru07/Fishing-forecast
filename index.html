@@ -5,7 +5,6 @@
 <title>MUL'T • Weather — прогноз клёва для спиннинга</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <style>
 :root{--bg:#081217;--s:#ffffff0c;--s2:#ffffff17;--ln:#ffffff18;--tx:#eef5f4;--mut:#8ba4a7;--ac:#c6f26b}
 *{box-sizing:border-box}
@@ -23,7 +22,7 @@ button{font:inherit;color:var(--tx);cursor:pointer}
 .ib.on{border-color:var(--ac);background:#c6f26b22}
 .go{padding:0 18px;border-radius:14px;border:0;background:var(--ac);color:#10200a;font-weight:800}
 button:focus-visible,input:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
-#ac{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:1000;background:#0d1c24f5;border:1px solid var(--ln);border-radius:16px;backdrop-filter:blur(16px);overflow:hidden;box-shadow:0 14px 34px #00000080;display:none}
+#ac{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:1000;background:#0d1c24f8;border:1px solid var(--ln);border-radius:16px;backdrop-filter:blur(16px);overflow:hidden;box-shadow:0 14px 34px #00000080;display:none}
 #ac.open{display:block}
 .aci{width:100%;text-align:left;padding:10px 16px;border:0;border-bottom:1px solid var(--ln);background:transparent;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .aci:last-child{border-bottom:0}
@@ -31,11 +30,14 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--ac);outline-off
 .aci b{display:block;font-size:.95rem;color:var(--tx)}
 .aci small{color:var(--mut);font-size:.78rem}
 .aci em{font-style:normal;font-size:.75rem;color:var(--ac);white-space:nowrap}
-#mapw{display:none;margin-top:12px;border-radius:20px;overflow:hidden;border:1px solid var(--ln);background:var(--s)}
-#mapw.open{display:block}
-#map{height:300px;width:100%;background:#0b171d}
+#mapw,#cfgw{display:none;margin-top:12px;border-radius:20px;overflow:hidden;border:1px solid var(--ln);background:var(--s)}
+#mapw.open,#cfgw.open{display:block}
+#cfgw{padding:16px}
+.cfg-g{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.cfg-g label{display:block;font-size:.8rem;color:var(--mut);margin-bottom:4px}
+.cfg-g input{width:100%;padding:9px 12px;border-radius:10px}
+#map{height:340px;width:100%;background:#0b171d}
 .mbar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-size:.82rem;color:var(--mut);gap:8px;flex-wrap:wrap}
-.leaflet-container{font:inherit}
 #res{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;color:var(--mut);font-size:.85rem}
 #place{margin:14px 0 0;font-size:1.05rem;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 #place small{font-weight:400;color:var(--mut);font-size:.82rem}
@@ -75,7 +77,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--ac);outline-off
 details{margin:14px 2px 4px}summary{cursor:pointer;color:var(--ac);padding:6px 0;font-weight:600}
 details p{color:var(--mut);font-size:.88rem}
 footer{color:var(--mut);font-size:.78rem;margin:10px 2px}
-@media(min-width:800px){.w{padding:28px 24px}#tabs{margin:12px 0;padding:2px 0}#tabs button{flex-basis:78px}.ring svg{max-width:210px}#map{height:360px}}
+@media(min-width:800px){.w{padding:28px 24px}#tabs{margin:12px 0;padding:2px 0}#tabs button{flex-basis:78px}.ring svg{max-width:210px}#map{height:400px}}
 @media(min-width:1100px){#main{grid-template-columns:repeat(2,minmax(0,1fr))}#main>.dh,#main>.cc,#main>.hr{grid-column:1/3}}
 </style></head><body><div class="w">
 <header>
@@ -83,17 +85,30 @@ footer{color:var(--mut);font-size:.78rem;margin:10px 2px}
  <h1>MUL'T • Weather</h1>
  <div class="sw">
   <form id="sf">
-   <input id="q" placeholder="Начните вводить город или посёлок…" autocomplete="off" aria-label="Поиск места">
+   <input id="q" placeholder="Город, посёлок, река или водохранилище…" autocomplete="off" aria-label="Поиск места">
    <button class="go">Найти</button>
-   <button type="button" class="ib" id="mapBtn" title="Выбрать точку на карте" aria-label="Выбрать на карте">🗺️</button>
+   <button type="button" class="ib" id="mapBtn" title="Выбрать точку на Яндекс.Карте" aria-label="Выбрать на карте">🗺️</button>
    <button type="button" class="ib" id="geo" title="Моё местоположение" aria-label="Моё местоположение">📍</button>
+   <button type="button" class="ib" id="cfgBtn" title="Калибровка давления" aria-label="Настройки">⚙️</button>
   </form>
   <div id="ac" role="listbox"></div>
+ </div>
+ <div id="cfgw">
+  <div class="cfg-g">
+   <div>
+    <label for="pOff">Поправка барометра под Яндекс.Погоду / местную метеостанцию (мм рт. ст.):</label>
+    <input type="number" id="pOff" step="1" value="0" placeholder="Например: -12">
+   </div>
+  </div>
+  <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+   <small class="mut">Если на сайте 765, а в Яндексе 753 — укажите поправку <b>-12</b> и нажмите «Применить».</small>
+   <button type="button" class="go" id="saveCfg" style="padding:8px 16px">Применить</button>
+  </div>
  </div>
  <div id="mapw">
   <div id="map"></div>
   <div class="mbar">
-   <span>Кликните в любое место на карте (водоём, реку или город), чтобы получить точный прогноз</span>
+   <span>Кликните в любую точку водоёма или перетащите метку (доступен режим «Гибрид» и «Спутник»)</span>
    <span id="mcoord"></span>
   </div>
  </div>
@@ -105,10 +120,15 @@ footer{color:var(--mut);font-size:.78rem;margin:10px 2px}
 <details><summary>Как считается прогноз</summary>
 <p><b>Комфорт</b> считается от «стандарта»: воздух 20–25 °C, ветер до 1 м/с, ясно, без осадков, солнце высоко. Чем дальше от стандарта, тем сильнее снижаются баллы, а факторы перемножаются, поэтому один сильный минус тянет вниз всю оценку. Ориентиры: 10 °C — около 5,5 из 10 по температуре, 0 °C — рыбалка почти невозможна; ветер 3 м/с ещё нормально, 5 м/с уже заметно мешает, от 10 м/с невозможно; солнце ниже 8° слепит, ночью (солнце ниже −12°) комфорт нулевой; полного балла по освещённости хватает при высоте солнца от 40°. Оценка дня — среднее за светлое время.</p>
 <p><b>Клёв</b> настроен на хищника (щука, окунь, судак): динамика давления за сутки 22%, время суток 17%, температура воды (оценка по воздуху за 3 суток) 15%, ветер 14% (лёгкая рябь 2–5 м/с лучше всего), уровень давления с учётом высоты рельефа 10%, облачность и осадки 10%, перепад температуры за сутки 8%, Луна 4% (небольшой модификатор активности). Это модель по общим правилам, а не гарантия: у каждого водоёма свои особенности.</p></details>
-<footer>Погода: Open-Meteo.com. Реальное атмосферное давление у поверхности (в мм рт. ст.).</footer>
+<footer>Погода: модель ICON / Open-Meteo (реальное давление у поверхности в мм рт. ст.). Карты и геокодинг: Яндекс.Карты.</footer>
 </div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
 <script>
+// =========================================================================
+// ВСТАВЬТЕ ВАШ API-КЛЮЧ ЯНДЕКС.КАРТ НИЖЕ:
+const YANDEX_MAPS_KEY = 'ed116897-17cd-4571-bb8a-6cbd59cbd60f';
+// =========================================================================
+
 const $=s=>document.querySelector(s),MM=.750062,RAD=Math.PI/180;
 const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
 const pw=(x,P)=>{if(x<=P[0][0])return P[0][1];for(let i=1;i<P.length;i++)if(x<=P[i][0]){const[a,b]=P[i-1],[c,d]=P[i];return b+(d-b)*(x-a)/(c-a)}return P[P.length-1][1]};
@@ -122,20 +142,28 @@ const wArr=deg=>`<i class="wa" style="transform:rotate(${Math.round(deg+180)}deg
 const wStr=deg=>`${WD[wdi(deg)]} ${wArr(deg)}`;
 const moon=d=>(((Date.parse(d+'T12:00Z')/864e5+2440587.5-2451550.1)/29.530588853)%1+1)%1,mi=p=>Math.floor((p*8+.5)%8);
 
+// Подгрузка скрипта Яндекс.Карт
+let ymapsReady=false;
+(function loadYandexMaps(){
+ const s=document.createElement('script');
+ const hasKey=YANDEX_MAPS_KEY&&YANDEX_MAPS_KEY!=='ed116897-17cd-4571-bb8a-6cbd59cbd60f';
+ s.src=`https://api-maps.yandex.ru/2.1/?${hasKey?`apikey=${encodeURIComponent(YANDEX_MAPS_KEY)}&`:''}lang=ru_RU`;
+ s.onload=()=>{if(window.ymaps)ymaps.ready(()=>{ymapsReady=true})};
+ document.head.appendChild(s);
+})();
+
 function sunEl(utc,lat,lon){
  const d=utc/864e5+2440587.5-2451545,g=(357.529+.98560028*d)*RAD,L=(280.459+.98564736*d+1.915*Math.sin(g)+.02*Math.sin(2*g))*RAD,e=23.439*RAD;
  const dec=Math.asin(Math.sin(e)*Math.sin(L)),ra=Math.atan2(Math.cos(e)*Math.sin(L),Math.cos(L)),H=((280.46061837+360.98564736629*d+lon)*RAD-ra);
  return Math.asin(Math.sin(lat*RAD)*Math.sin(dec)+Math.cos(lat*RAD)*Math.cos(dec)*Math.cos(H))/RAD;
 }
 
-// Усреднение направления ветра через векторы
 function avgDir(rows){
  let sx=0,sy=0;
  rows.forEach(r=>{sx+=Math.cos(r.wdir*RAD);sy+=Math.sin(r.wdir*RAD)});
  return ((Math.atan2(sy,sx)/RAD)+360)%360;
 }
 
-// Комфорт
 const PT=[[-15,0],[0,.08],[5,.3],[10,.55],[15,.8],[20,1],[25,1],[30,.75],[35,.4],[40,.1]],PW=[[0,1],[1,1],[3,.75],[5,.4],[7,.15],[10,0]],
  PL=[[-12,0],[-6,.1],[0,.35],[8,.55],[20,.85],[40,1]],PR=[[0,1],[.2,.8],[1,.5],[3,.2],[6,0]];
 const C={
@@ -145,7 +173,6 @@ const C={
  p:{n:'Небо и осадки',e:.3,f:r=>r.code>=95?.05:(1-.15*r.cl/100)*pw(r.pr,PR),v:a=>fmt(a.cl)+'% облаков'+(a.pr>=.2?', '+fmt(a.pr,1)+' мм':'')}
 };
 
-// Клёв (хищник, спиннинг)
 const B={
  tr:{n:'Динамика давления',w:.22,f:r=>pw(r.tr,[[-8,.1],[-6,.15],[-3,.4],[-1,.7],[0,.85],[1,.95],[2,1],[3,1],[6,.45],[9,.3]]),v:a=>(a.tr>0?'+':'')+fmt(a.tr,1)+' мм за сутки'},
  d:{n:'Время суток',w:.17,f:r=>r.dist<=1.5?1:r.dist<=3?.8:r.day?.6:.45,v:a=>'рассвет '+hh(a.sr)+', закат '+hh(a.ss)},
@@ -159,7 +186,11 @@ const B={
 
 const biteL=v=>v<1.5?'Клёва нет':v<3?'Слабый':v<5?'Ниже среднего':v<7?'Средний':v<9?'Хороший':'Жор!';
 const comfL=v=>v<1.5?'Почти невозможно':v<3?'Тяжело':v<5?'Терпимо':v<7?'Нормально':v<9?'Приятно':'Идеально';
-let D,sel,metric='p',RS=[],acIdx=-1,acTimer=null,map=null,marker=null,curLoc=[55.7558,37.6173,'Москва'];
+
+let D,sel,metric='p',RS=[],acIdx=-1,acTimer=null,yMap=null,yPlacemark=null,rawJson=null;
+let curLoc=[53.5078,49.4204,'Тольятти, Самарская область'];
+let pOffset=+(localStorage.getItem('pOff')||0);
+$('#pOff').value=pOffset;
 
 function mkDay(date,rs,sr,ss){
  let a=rs.filter(r=>r.el>0);if(!a.length)a=rs.filter(r=>r.el>-6);if(!a.length)a=rs;
@@ -172,15 +203,16 @@ function mkDay(date,rs,sr,ss){
 }
 
 function build(j){
+ rawJson=j;
  const h=j.hourly,off=j.utc_offset_seconds*1000,dl=j.daily,SR={},SS={},by={};
- const elev=j.elevation||0,pNorm=760*Math.exp(-elev/8430);
+ const elev=j.elevation||0,pNorm=760*Math.exp(-elev/8430)+pOffset;
  dl.time.forEach((d,i)=>{SR[d]=Date.parse(dl.sunrise[i]+'Z');SS[d]=Date.parse(dl.sunset[i]+'Z')});
  const T=h.temperature_2m,P=h.surface_pressure||h.pressure_msl;
  h.time.forEach((s,i)=>{
-  const date=s.slice(0,10),t=Date.parse(s+'Z'),p=P[i]*MM,i0=Math.max(0,i-24),i3=Math.max(0,i-72);
+  const date=s.slice(0,10),t=Date.parse(s+'Z'),p=P[i]*MM+pOffset,i0=Math.max(0,i-24),i3=Math.max(0,i-72);
   const w3=T.slice(i3,i+1);
   const r={t,date,hr:+s.slice(11,13),temp:T[i],wind:h.wind_speed_10m[i],wgust:h.wind_gusts_10m?h.wind_gusts_10m[i]:h.wind_speed_10m[i],
-   wdir:h.wind_direction_10m?h.wind_direction_10m[i]:0,p,pNorm,tr:p-P[i0]*MM,cl:h.cloud_cover[i],pr:h.precipitation[i],code:h.weather_code[i],ph:moon(date),
+   wdir:h.wind_direction_10m?h.wind_direction_10m[i]:0,p,pNorm,tr:p-(P[i0]*MM+pOffset),cl:h.cloud_cover[i],pr:h.precipitation[i],code:h.weather_code[i],ph:moon(date),
    wt:w3.reduce((x,y)=>x+y,0)/w3.length,dT:T[i]-T[i0],el:sunEl(t-off,j.latitude,j.longitude)};
   r.day=t>SR[date]&&t<SS[date];r.dist=Math.min(Math.abs(t-SR[date]),Math.abs(t-SS[date]))/36e5;
   let sum=0;r.f={};for(const k in B){r.f[k]=B[k].f(r);sum+=B[k].w*r.f[k]}
@@ -188,15 +220,17 @@ function build(j){
   r.bite=10*Math.pow(sum,2.2);r.comf=10*c;
   (by[date]=by[date]||[]).push(r);
  });
- const now=new Date(Date.now()+off);
+ const now=new Date(Date.now()+off),today=now.toISOString().slice(0,10),hour=now.getUTCHours();
+ const tdRows=by[today]||[],curRow=tdRows.find(r=>r.hr===hour)||tdRows[0];
  const cur=j.current?{
   temp:j.current.temperature_2m,
   wind:j.current.wind_speed_10m,
   wgust:j.current.wind_gusts_10m||j.current.wind_speed_10m,
   wdir:j.current.wind_direction_10m||0,
-  p:(j.current.surface_pressure||0)*MM
- }:null;
- D={today:now.toISOString().slice(0,10),hour:now.getUTCHours(),cur,elev,days:Object.keys(by).sort().slice(3).map(d=>mkDay(d,by[d],SR[d],SS[d]))};
+  p:(j.current.surface_pressure?j.current.surface_pressure*MM:curRow?curRow.p:755)+pOffset
+ }:(curRow?{temp:curRow.temp,wind:curRow.wind,wgust:curRow.wgust,wdir:curRow.wdir,p:curRow.p}:null);
+
+ D={today,hour,cur,elev,days:Object.keys(by).sort().slice(3).map(d=>mkDay(d,by[d],SR[d],SS[d]))};
  sel=Math.max(0,D.days.findIndex(d=>d.date==D.today));render();
 }
 
@@ -227,8 +261,8 @@ function render(){
  <div class="card"><div class="hero">${ring(d.bite,'Клёв',biteL(d.bite))}${ring(d.comf,'Комфорт',comfL(d.comf),1)}</div>
  <div class="st">
   <div><small>Температура</small><b>${fmt(v.tmin)}…${fmt(v.tmax)} °C</b><small>${tSub}</small></div>
-  <div><small>Ветер ${isTd?'(сейчас)':'(день)'}</small><b>${fmt(wNow,1)} м/с • ${wStr(wdNow)}</b><small>порывы до ${fmt(v.wmax,1)} м/с</small></div>
-  <div><small>Давление ${tr}</small><b>${fmt(pNow)}</b><small>мм рт. ст.</small></div>
+  <div><small>Ветер ${isTd?'(сейчас)':'(день)'}</small><b>${fmt(wNow,1)} м/с • ${wStr(wdNow)}</b><small>порывы до ${fmt(isTd?Math.max(v.wmax,D.cur.wgust):v.wmax,1)} м/с</small></div>
+  <div><small>Давление ${tr}</small><b>${fmt(pNow)}</b><small>мм рт. ст.${pOffset?` (попр. ${pOffset>0?'+':''}${pOffset})`:''}</small></div>
  </div></div>
  <div class="card"><h3>Что влияет на клёв</h3>${fac(B,d.fb,v)}${worst(B,d.fb)}</div>
  <div class="card"><h3>Что влияет на комфорт</h3>${fac(C,d.fc,v)}${worst(C,d.fc)}</div>
@@ -243,30 +277,73 @@ async function go(lat,lon,name){
  curLoc=[+lat,+lon,name];
  $('#place').innerHTML=`<span>${name}</span><small>${(+lat).toFixed(4)}°, ${(+lon).toFixed(4)}°</small>`;
  $('#main').innerHTML='<div class="card">Загружаю прогноз…</div>';
- syncMap(+lat,+lon);
+ syncMap(+lat,+lon,name);
  try{localStorage.setItem('loc',JSON.stringify(curLoc))}catch(e){}
  try{
-  const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,weather_code&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,precipitation,weather_code&daily=sunrise,sunset&past_days=6&forecast_days=8&wind_speed_unit=ms&timezone=auto`);
+  const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=icon_seamless&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,weather_code&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,precipitation,weather_code&daily=sunrise,sunset&past_days=6&forecast_days=8&wind_speed_unit=ms&timezone=auto`);
   if(!r.ok)throw 0;build(await r.json());
  }catch(e){$('#main').innerHTML='<div class="card">Не удалось получить погоду. Проверьте интернет и попробуйте ещё раз.</div>'}
 }
 
-// Автокомплит при вводе
+// Поиск населённых пунктов и водоёмов через Яндекс.Геокодер (с резервным каналом)
+async function searchPlaces(q){
+ // 1. Через JS API Яндекс.Карт (ymaps.geocode)
+ if(ymapsReady&&window.ymaps){
+  try{
+   const res=await ymaps.geocode(q,{results:6});
+   const list=[];
+   res.geoObjects.each(geo=>{
+    const coords=geo.geometry.getCoordinates();
+    list.push({
+     name:geo.properties.get('name')||q,
+     sub:geo.properties.get('description')||'',
+     latitude:coords[0],
+     longitude:coords[1]
+    });
+   });
+   if(list.length)return list;
+  }catch(e){}
+ }
+ // 2. Прямой HTTP-запрос к Геокодеру Яндекса
+ if(YANDEX_MAPS_KEY&&YANDEX_MAPS_KEY!=='ed116897-17cd-4571-bb8a-6cbd59cbd60f'){
+  try{
+   const r=await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${encodeURIComponent(YANDEX_MAPS_KEY)}&geocode=${encodeURIComponent(q)}&format=json&results=6&lang=ru_RU`);
+   if(r.ok){
+    const d=await r.json(),members=d.response?.GeoObjectCollection?.featureMember||[];
+    if(members.length)return members.map(m=>{
+     const g=m.GeoObject,[lon,lat]=g.Point.pos.split(' ').map(Number);
+     return {name:g.name,sub:g.description||'',latitude:lat,longitude:lon};
+    });
+   }
+  }catch(e){}
+ }
+ // 3. Резервный поиск (если ключ ещё не вставлен)
+ try{
+  const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&accept-language=ru&q=${encodeURIComponent(q)}`);
+  if(r.ok){
+   const d=await r.json();
+   if(d.length)return d.map(x=>{
+    const a=x.address||{},name=x.name||a.city||a.town||a.village||x.display_name.split(',')[0];
+    const sub=[a.county,a.state,a.country].filter(Boolean).filter(s=>s!==name).join(', ');
+    return {name,sub,latitude:+x.lat,longitude:+x.lon};
+   });
+  }
+ }catch(e){}
+ return [];
+}
+
 function closeAc(){$('#ac').classList.remove('open');$('#ac').innerHTML='';acIdx=-1}
 function renderAc(){
  if(!RS.length){closeAc();return}
- $('#ac').innerHTML=RS.map((c,i)=>{
-  const sub=[c.admin1,c.admin2,c.country].filter(Boolean).join(', ');
-  return `<button type="button" class="aci ${i==acIdx?'act':''}" data-ac="${i}">
-   <div><b>${c.name}</b><small>${sub||'Координаты'}</small></div>
-   <em>${c.latitude.toFixed(2)}°, ${c.longitude.toFixed(2)}°</em>
-  </button>`;
- }).join('');
+ $('#ac').innerHTML=RS.map((c,i)=>`<button type="button" class="aci ${i==acIdx?'act':''}" data-ac="${i}">
+  <div><b>${c.name}</b><small>${c.sub||'Координаты'}</small></div>
+  <em>${c.latitude.toFixed(2)}°, ${c.longitude.toFixed(2)}°</em>
+ </button>`).join('');
  $('#ac').classList.add('open');
 }
 function pickAc(i){
  const c=RS[i];if(!c)return;
- const label=c.name+(c.admin1?', '+c.admin1:'');
+ const label=c.name+(c.sub?', '+c.sub.split(',')[0]:'');
  $('#q').value=c.name;closeAc();$('#res').textContent='';
  go(c.latitude,c.longitude,label);
 }
@@ -276,10 +353,7 @@ $('#q').addEventListener('input',e=>{
  clearTimeout(acTimer);
  if(q.length<2){closeAc();return}
  acTimer=setTimeout(async()=>{
-  try{
-   const j=await(await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=7&language=ru`)).json();
-   RS=j.results||[];acIdx=-1;renderAc();
-  }catch(x){}
+  try{RS=await searchPlaces(q);acIdx=-1;renderAc()}catch(x){}
  },240);
 });
 
@@ -295,49 +369,113 @@ $('#sf').onsubmit=async e=>{
  e.preventDefault();closeAc();
  const q=$('#q').value.trim();if(!q)return;
  try{
-  const j=await(await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=ru`)).json();
-  RS=j.results||[];
+  RS=await searchPlaces(q);
   if(RS.length)pickAc(0);
   else $('#res').textContent='Ничего не найдено. Проверьте название или выберите точку на карте 🗺️.';
  }catch(x){$('#res').textContent='Поиск недоступен. Проверьте интернет.'}
 };
 
-// Интерактивная карта
-function initMap(){
- if(map)return;
- map=L.map('map').setView([curLoc[0],curLoc[1]],10);
- L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  attribution:'© OpenStreetMap',maxZoom:18
- }).addTo(map);
- marker=L.marker([curLoc[0],curLoc[1]]).addTo(map);
- map.on('click',async e=>{
-  const{lat,lng}=e.latlng;
-  marker.setLatLng([lat,lng]);
-  $('#mcoord').textContent=`${lat.toFixed(4)}°, ${lng.toFixed(4)}°`;
-  let name=`Точка на карте`;
+// Определение названия точки по координатам через Яндекс
+async function reverseGeocode(lat,lon){
+ if(ymapsReady&&window.ymaps){
   try{
-   const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=12&accept-language=ru`);
-   if(r.ok){
-    const d=await r.json(),a=d.address||{};
-    name=a.city||a.town||a.village||a.hamlet||a.Water||a.county||d.name||name;
-    if(a.state&&name!==a.state)name+=`, ${a.state}`;
+   const res=await ymaps.geocode([lat,lon],{results:1});
+   const first=res.geoObjects.get(0);
+   if(first){
+    const name=first.properties.get('name'),desc=first.properties.get('description');
+    return name+(desc?', '+desc.split(',')[0]:'');
    }
-  }catch(x){}
-  go(lat,lng,name);
+  }catch(e){}
+ }
+ try{
+  const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=13&accept-language=ru`);
+  if(r.ok){
+   const d=await r.json(),a=d.address||{};
+   let name=a.water||a.river||a.city||a.town||a.village||a.hamlet||a.county||d.name||'Точка на водоёме';
+   if(a.state&&name!==a.state)name+=`, ${a.state}`;
+   return name;
+  }
+ }catch(e){}
+ return 'Точка на водоёме';
+}
+
+// Инициализация Яндекс.Карты
+function initMap(){
+ if(yMap)return;
+ if(!window.ymaps){
+  $('#mcoord').textContent='Загрузка Яндекс.Карт… проверьте API-ключ.';
+  return;
+ }
+ ymaps.ready(()=>{
+  if(yMap)return;
+  yMap=new ymaps.Map('map',{
+   center:[curLoc[0],curLoc[1]],
+   zoom:11,
+   type:'yandex#hybrid',
+   controls:['zoomControl','typeSelector','fullscreenControl','geolocationControl']
+  });
+  yPlacemark=new ymaps.Placemark([curLoc[0],curLoc[1]],{
+   balloonContent:curLoc[2]
+  },{
+   preset:'islands#limeDotIcon',
+   draggable:true
+  });
+  yMap.geoObjects.add(yPlacemark);
+
+  // Клик по карте
+  yMap.events.add('click',async e=>{
+   const [lat,lon]=e.get('coords');
+   yPlacemark.geometry.setCoordinates([lat,lon]);
+   $('#mcoord').textContent=`${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
+   const name=await reverseGeocode(lat,lon);
+   go(lat,lon,name);
+  });
+
+  // Перетаскивание метки
+  yPlacemark.events.add('dragend',async()=>{
+   const [lat,lon]=yPlacemark.geometry.getCoordinates();
+   $('#mcoord').textContent=`${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
+   const name=await reverseGeocode(lat,lon);
+   go(lat,lon,name);
+  });
  });
 }
-function syncMap(lat,lon){
+
+function syncMap(lat,lon,name){
  $('#mcoord').textContent=`${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
- if(map&&marker){marker.setLatLng([lat,lon]);map.panTo([lat,lon])}
+ if(yMap&&yPlacemark){
+  yPlacemark.geometry.setCoordinates([lat,lon]);
+  yPlacemark.properties.set('balloonContent',name||'');
+  yMap.panTo([lat,lon],{flying:true});
+ }
 }
 
 $('#mapBtn').onclick=()=>{
  const w=$('#mapw'),on=w.classList.toggle('open');
  $('#mapBtn').classList.toggle('on',on);
- if(on){initMap();setTimeout(()=>map.invalidateSize(),60)}
+ if(on){
+  initMap();
+  setTimeout(()=>{if(yMap)yMap.container.fitToViewport()},80);
+ }
 };
 
-$('#geo').onclick=()=>navigator.geolocation&&navigator.geolocation.getCurrentPosition(p=>go(p.coords.latitude,p.coords.longitude,'Моё местоположение'),()=>{$('#res').textContent='Нет доступа к геолокации. Выберите точку на карте или введите город.'});
+$('#cfgBtn').onclick=()=>{
+ const w=$('#cfgw'),on=w.classList.toggle('open');
+ $('#cfgBtn').classList.toggle('on',on);
+};
+
+$('#saveCfg').onclick=()=>{
+ pOffset=+($('#pOff').value||0);
+ try{localStorage.setItem('pOff',pOffset)}catch(e){}
+ $('#cfgw').classList.remove('open');$('#cfgBtn').classList.remove('on');
+ if(rawJson)build(rawJson);
+};
+
+$('#geo').onclick=()=>navigator.geolocation&&navigator.geolocation.getCurrentPosition(async p=>{
+ const lat=p.coords.latitude,lon=p.coords.longitude;
+ const name=await reverseGeocode(lat,lon);
+ go(lat,lon,name);
+},()=>{$('#res').textContent='Нет доступа к геолокации. Выберите точку на карте 🗺️ или введите город.'});
 
 document.addEventListener('click',e=>{
  if(!e.target.closest('.sw'))closeAc();
