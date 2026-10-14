@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#081217">
 <title>MUL'T • Weather — прогноз клёва для спиннинга</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='120' height='120' rx='28' fill='%23081217'/%3E%3Cpath d='M 85 25 L 85 80 A 25 25 0 0 1 35 80 L 35 70 M 23 74 L 35 62 L 47 74' fill='none' stroke='%23c6f26b' stroke-width='14' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
@@ -82,7 +83,23 @@ footer{color:var(--mut);font-size:.78rem;margin:10px 2px}
 </style></head><body><div class="w">
 <header>
  <div class="eb">Прогноз для спиннинга</div>
- <h1>MUL'T • Weather</h1>
+ <div style="display: flex; align-items: center; gap: 12px; margin: 2px 0 14px;">
+  <svg viewBox="0 0 120 120" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+   <defs>
+    <linearGradient id="lgrad" x1="0%" y1="0%" x2="100%" y2="100%">
+     <stop offset="0%" stop-color="#c6f26b" />
+     <stop offset="100%" stop-color="#1f7a74" />
+    </linearGradient>
+   </defs>
+   <!-- Пунктирное солнце / радар -->
+   <circle cx="60" cy="60" r="54" fill="#ffffff0c" stroke="#8ba4a7" stroke-width="4" stroke-dasharray="6 8" />
+   <!-- Волна -->
+   <path d="M 15 65 Q 35 45 60 65 T 105 65" fill="none" stroke="#eef5f4" stroke-width="5" stroke-linecap="round" />
+   <!-- Стилизованный рыболовный крючок -->
+   <path d="M 85 25 L 85 80 A 25 25 0 0 1 35 80 L 35 70 M 27 75 L 35 67 L 43 75" fill="none" stroke="url(#lgrad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+  <h1 style="margin: 0;">MUL'T • Weather</h1>
+ </div>
  <div class="sw">
   <form id="sf">
    <input id="q" placeholder="Город, посёлок, река или водохранилище…" autocomplete="off" aria-label="Поиск места">
