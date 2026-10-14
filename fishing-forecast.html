@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06232c">
+<title>Поплавок — прогноз клёва</title>
+<style>
+:root{--bg:#06232c;--c:#0c3342;--c2:#124457;--tx:#eaf5f2;--mut:#8db4b9;--ac:#ff5a4d;--sand:#f0d9a8;--ln:#ffffff1c}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.45 "Trebuchet MS",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--tx);
+ background:radial-gradient(130% 55% at 50% -8%,#1d6275 0,var(--bg) 62%) fixed;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.w{max-width:1100px;margin:auto;padding:12px}
+h1{margin:4px 0 10px;font:700 1.6rem Georgia,serif;letter-spacing:.2px}
+h1 i{color:var(--ac);font-style:normal}
+h3{margin:0 0 8px;font-size:1rem}
+form{display:flex;gap:8px}
+input{flex:1;min-width:0;padding:11px 14px;border-radius:12px;border:1px solid var(--ln);background:#ffffff12;color:var(--tx);font:inherit}
+button{font:inherit;color:var(--tx);cursor:pointer}
+form button{padding:0 14px;border-radius:12px;border:1px solid var(--ln);background:var(--c2)}
+form button:first-of-type{background:var(--ac);border-color:var(--ac);font-weight:700}
+button:focus-visible,input:focus-visible{outline:2px solid var(--sand);outline-offset:2px}
+#res{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+#res button{padding:6px 10px;border-radius:999px;border:1px solid var(--ln);background:var(--c)}
+#place{margin:12px 2px 8px;color:var(--mut)}
+#tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;scroll-snap-type:x proximity}
+#tabs button{flex:0 0 62px;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;border-radius:14px;border:1px solid var(--ln);background:var(--c)}
+#tabs small{color:var(--mut)}#tabs b{font-size:1.15rem}
+#tabs i{font:700 .75rem system-ui;font-style:normal;padding:1px 7px;border-radius:99px;color:#04181e}
+#tabs .on{background:var(--c2);border:2px solid var(--sand)}
+#tabs .past{opacity:.7}
+.card{background:linear-gradient(160deg,var(--c2),var(--c));border:1px solid var(--ln);border-radius:16px;padding:14px}
+#main{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.hs{max-width:100%}
+.dh{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;align-items:baseline}
+.dh h2{margin:0;font:700 1.25rem Georgia,serif}.mut{color:var(--mut)}
+.gg,.st{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.st{grid-template-columns:repeat(3,minmax(0,1fr))}
+.gz{text-align:center;padding:10px}
+.gz svg{width:100%;max-width:150px}
+.gz circle{fill:none;stroke-width:12}.gz .bg{stroke:#ffffff18}.gz .fg{stroke-linecap:round}
+.gz text{font:700 34px system-ui;fill:#fff}
+.gz p{margin:2px 0 0;font-weight:700}
+.st .card{padding:10px;text-align:center}.st b{display:block;font-size:1.05rem}.st small{color:var(--mut)}
+.two{display:grid;gap:12px}
+.fr{display:grid;grid-template-columns:1fr auto;gap:0 8px;margin-bottom:9px}
+.fr em{font-style:normal;color:var(--mut);font-size:.85rem;text-align:right}
+.bar{grid-column:1/3;height:6px;border-radius:9px;background:#ffffff18;overflow:hidden}.bar u{display:block;height:100%}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.chips span{padding:3px 10px;border-radius:99px;background:#ffffff14}
+.seg{display:flex;gap:6px;margin-bottom:6px}
+.seg button{flex:1;padding:6px;border-radius:10px;border:1px solid var(--ln);background:transparent}
+.seg .on{background:var(--ac);border-color:var(--ac);font-weight:700}
+.ch{width:100%;height:auto;display:block}.ch text{fill:var(--mut);font-size:11px}
+.hs{display:flex;overflow-x:auto}
+.hc{flex:0 0 52px;display:grid;grid-template-rows:repeat(6,32px);align-items:center;text-align:center;font-size:.85rem}
+.hc.lg{flex-basis:76px;position:sticky;left:0;z-index:1;background:#0f3a4a;color:var(--mut);text-align:left;padding-left:4px}
+.hc.nt{background:#00000030}.hc.now{outline:2px solid var(--sand);outline-offset:-2px;border-radius:8px}
+.bt{margin:auto;min-width:30px;padding:1px 6px;border-radius:99px;color:#04181e;font-weight:700}
+details{margin:12px 0 4px}summary{cursor:pointer;color:var(--sand);padding:6px 0}
+details p,details li{color:var(--mut);font-size:.9rem}
+footer{color:var(--mut);font-size:.8rem;margin:10px 0 20px}
+@media(min-width:800px){.w{padding:20px}.two{grid-template-columns:1fr 1fr}.gz svg{max-width:170px}#tabs button{flex-basis:76px}}
+@media(min-width:1100px){#main{grid-template-columns:repeat(2,minmax(0,1fr))}#main>.dh,#main>.hr,#main>.cc{grid-column:1/3}.gg{grid-column:1}}
+</style></head><body><div class="w">
+<header>
+ <h1>🎣 Поплавок: прогноз клёва</h1>
+ <form id="sf"><input id="q" placeholder="Город или посёлок у водоёма" autocomplete="off" aria-label="Поиск места"><button>Найти</button><button type="button" id="geo" title="Моё местоположение" aria-label="Моё местоположение">📍</button></form>
+ <div id="res"></div>
+</header>
+<div id="place"></div>
+<nav id="tabs" aria-label="Дни"></nav>
+<main id="main"></main>
+<details><summary>Как считается прогноз</summary>
+<p>Клёв — взвешенная сумма факторов, приведённая к шкале 0–10: динамика давления за сутки 25%, уровень давления 15%, температура воздуха 15%, время суток (рассвет и закат лучше всего) 15%, ветер 12%, облачность и осадки 10%, фаза Луны 8% (новолуние и полнолуние активнее четвертей). Идеал: давление 748–762 мм рт. ст., медленно растущее или стабильное; воздух 12–20 °C; ветер 1–4 м/с; переменная облачность.</p>
+<p>Комфорт: температура 45%, ветер 30%, освещённость 25%, минус штраф за осадки. Лучше всего при 18–24 °C, штиле и дневном свете. Оценка дня — среднее за часы с 05:00 до 22:00. Это модель по общим рыболовным правилам, а не гарантия: у каждого водоёма и вида рыбы свои особенности.</p></details>
+<footer>Погода: Open-Meteo.com. Давление приведено к уровню моря и переведено в мм рт. ст.</footer>
+</div>
+<script>
+const $=s=>document.querySelector(s),MM=.750062;
+const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const lp=(x,a,b,y,z)=>y+(z-y)*cl((x-a)/(b-a));
+const fmt=(x,n=0)=>(+x).toFixed(n).replace('-','−');
+const col=s=>`hsl(${Math.round(s*12)} 75% 52%)`;
+const hh=ms=>new Date(ms).toISOString().slice(11,16);
+const wd=d=>new Date(d+'T12:00Z').toLocaleDateString('ru',{weekday:'short',timeZone:'UTC'});
+const MN=['Новолуние','Растущий серп','Первая четверть','Растущая Луна','Полнолуние','Убывающая Луна','Последняя четверть','Убывающий серп'],ME=['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
+const moon=d=>(((Date.parse(d+'T12:00Z')/864e5+2440587.5-2451550.1)/29.530588853)%1+1)%1;
+const mi=p=>Math.floor((p*8+.5)%8);
+const F={
+ tr:{n:'Динамика давления',w:.25,f:r=>{const d=r.tr;return d<-6?.15:d<-3?lp(d,-6,-3,.15,.4):d<-1?lp(d,-3,-1,.4,.65):d<1?.85:d<3?1:d<6?lp(d,3,6,1,.4):.3},v:a=>(a.tr>0?'+':'')+fmt(a.tr,1)+' мм за сутки'},
+ p:{n:'Давление',w:.15,f:r=>r.p>=748&&r.p<=762?1:r.p<748?lp(r.p,720,748,.1,1):lp(r.p,762,785,1,.1),v:a=>fmt(a.p)+' мм рт. ст.'},
+ t:{n:'Температура воздуха',w:.15,f:r=>r.temp<12?lp(r.temp,-10,12,.1,1):r.temp<=20?1:lp(r.temp,20,32,1,.2),v:a=>fmt(a.temp)+' °C'},
+ d:{n:'Время суток',w:.15,f:r=>r.dist<=1.5?1:r.dist<=3?.8:r.day?.6:.5,v:a=>'рассвет '+hh(a.sr)+', закат '+hh(a.ss)},
+ w:{n:'Ветер',w:.12,f:r=>r.wind<1?.7:r.wind<=4?1:r.wind<=10?lp(r.wind,4,10,1,.15):.05,v:a=>fmt(a.wind,1)+' м/с'},
+ s:{n:'Облачность и осадки',w:.1,f:r=>r.code>=95?.05:cl((r.cl>=30&&r.cl<=85?1:r.cl<30?.7:.8)-(r.pr<.2?0:r.pr<2?.15:.4)),v:a=>fmt(a.cl)+'%'+(a.pr>=.2?', осадки '+fmt(a.pr,1)+' мм':'')},
+ m:{n:'Фаза Луны',w:.08,f:r=>.35+.65*Math.abs(Math.cos(2*Math.PI*r.ph)),v:a=>MN[mi(a.ph)]}
+};
+function comfort(r){
+ const ct=r.temp<18?lp(r.temp,-15,18,0,1):r.temp<=24?1:lp(r.temp,24,38,1,0);
+ const cw=lp(r.wind,2,14,1,0),cd=r.day?1:r.dist<=1.5?.6:.2,rain=r.pr>=2?.2:r.pr>=.2?.1:0;
+ return 10*cl(.45*ct+.3*cw+.25*cd-rain);
+}
+const biteL=v=>v<1.5?'Клёва нет':v<3?'Слабый':v<5?'Ниже среднего':v<7?'Средний':v<9?'Хороший':'Жор!';
+const comfL=v=>v<3?'Некомфортно':v<5?'Терпимо':v<7?'Нормально':v<9?'Приятно':'Отлично';
+let D,sel,metric='p',RS=[];
+function mkDay(date,rs,sr,ss){
+ const a=rs.filter(r=>r.hr>=5&&r.hr<=22),m=(k,x=a)=>x.reduce((s,r)=>s+r[k],0)/x.length,f={};
+ for(const k in F)f[k]=a.reduce((s,r)=>s+r.f[k],0)/a.length;
+ return{date,rows:rs,f,bite:m('bite'),comf:m('comf'),
+  v:{p:m('p',rs),tr:rs[rs.length-1].tr,temp:m('temp'),tmin:Math.min(...rs.map(r=>r.temp)),tmax:Math.max(...rs.map(r=>r.temp)),wind:m('wind'),wmax:Math.max(...rs.map(r=>r.wind)),cl:m('cl'),pr:rs.reduce((s,r)=>s+r.pr,0),ph:rs[0].ph,sr,ss}};
+}
+function build(j){
+ const h=j.hourly,off=j.utc_offset_seconds*1000,dl=j.daily,SR={},SS={},by={};
+ dl.time.forEach((d,i)=>{SR[d]=Date.parse(dl.sunrise[i]+'Z');SS[d]=Date.parse(dl.sunset[i]+'Z')});
+ h.time.forEach((s,i)=>{
+  const date=s.slice(0,10),t=Date.parse(s+'Z'),p=h.pressure_msl[i]*MM,p0=h.pressure_msl[Math.max(0,i-24)]*MM;
+  const r={t,date,hr:+s.slice(11,13),temp:h.temperature_2m[i],wind:h.wind_speed_10m[i],p,tr:p-p0,cl:h.cloud_cover[i],pr:h.precipitation[i],code:h.weather_code[i],ph:moon(date)};
+  r.day=t>SR[date]&&t<SS[date];r.dist=Math.min(Math.abs(t-SR[date]),Math.abs(t-SS[date]))/36e5;
+  let sum=0;r.f={};for(const k in F){r.f[k]=F[k].f(r);sum+=F[k].w*r.f[k]}
+  r.bite=10*cl((sum-.2)/.75);r.comf=comfort(r);
+  (by[date]=by[date]||[]).push(r);
+ });
+ const now=new Date(Date.now()+off);
+ D={today:now.toISOString().slice(0,10),hour:now.getUTCHours(),days:Object.keys(by).sort().slice(1).map(d=>mkDay(d,by[d],SR[d],SS[d]))};
+ sel=Math.max(0,D.days.findIndex(d=>d.date==D.today));render();
+}
+const gauge=(v,t,l)=>`<div class="card gz"><svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="50"/><circle class="fg" cx="60" cy="60" r="50" stroke="${col(v)}" stroke-dasharray="${314*v/10} 314" transform="rotate(-90 60 60)"/><text x="60" y="71" text-anchor="middle">${fmt(v,1)}</text></svg><h3>${t}</h3><p style="color:${col(v)}">${l}</p></div>`;
+function chart(){
+ const all=D.days.flatMap(d=>d.rows),k={p:'p',t:'temp',w:'wind'}[metric],v=all.map(r=>r[k]),n=all.length-1;
+ const mn=Math.min(...v),mx=Math.max(...v),W=660,H=180,B=24,X=i=>i/n*W,Y=s=>H-B-(s-mn)/(mx-mn||1)*(H-B-22),dg=k=='wind'?1:0;
+ const ti=D.days.findIndex(d=>d.date==D.today);
+ return `<svg class="ch" viewBox="0 0 ${W} ${H}"><rect x="${X(sel*24)}" y="0" width="${X(24)}" height="${H-B}" fill="#f0d9a82a"/>
+ ${D.days.map((d,i)=>`<line x1="${X(i*24)}" x2="${X(i*24)}" y1="0" y2="${H-B}" stroke="#ffffff14"/><text x="${X(i*24+12)}" y="${H-6}" text-anchor="middle" ${i==sel?'style="fill:#f0d9a8;font-weight:700"':''}>${+d.date.slice(8)}</text>`).join('')}
+ ${ti>=0?`<line x1="${X(ti*24+D.hour)}" x2="${X(ti*24+D.hour)}" y1="0" y2="${H-B}" stroke="#ff5a4d" stroke-dasharray="4 3"/>`:''}
+ <polyline fill="none" stroke="#7fe0d0" stroke-width="2.2" stroke-linejoin="round" points="${v.map((s,i)=>X(i).toFixed(1)+','+Y(s).toFixed(1)).join(' ')}"/>
+ <text x="4" y="12">${fmt(mx,dg)}</text><text x="4" y="${H-B-4}">${fmt(mn,dg)}</text></svg>`;
+}
+function render(){
+ const d=D.days[sel],v=d.v,rows=d.rows,mt=metric;
+ $('#tabs').innerHTML=D.days.map((x,i)=>`<button data-i="${i}" class="${i==sel?'on':''} ${x.date<D.today?'past':''}"><small>${x.date==D.today?'сегодня':wd(x.date)}</small><b>${+x.date.slice(8)}</b><i style="background:${col(x.bite)}">${fmt(x.bite,1)}</i></button>`).join('');
+ const best=[...rows].sort((a,b)=>b.bite-a.bite).slice(0,3).sort((a,b)=>a.hr-b.hr);
+ const worst=Object.keys(F).sort((a,b)=>d.f[a]-d.f[b])[0],tr=v.tr>1?'↗':v.tr<-1?'↘':'→';
+ const hr=rows.map(r=>`<div class="hc ${r.day?'':'nt'} ${d.date==D.today&&r.hr==D.hour?'now':''}"><b>${String(r.hr).padStart(2,'0')}</b><span class="bt" style="background:${col(r.bite)}">${fmt(r.bite)}</span><span style="color:${col(r.comf)};font-weight:700">${fmt(r.comf)}</span><span>${fmt(r.temp)}°</span><span>${fmt(r.wind,1)}</span><span>${fmt(r.p)}</span></div>`).join('');
+ $('#main').innerHTML=`
+ <div class="dh hr0 dh"><h2>${new Date(d.date+'T12:00Z').toLocaleDateString('ru',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'})}</h2><span class="mut">${ME[mi(v.ph)]} ${MN[mi(v.ph)]}</span></div>
+ <div class="gg">${gauge(d.bite,'Клёв',biteL(d.bite))}${gauge(d.comf,'Комфорт',comfL(d.comf))}</div>
+ <div class="st"><div class="card"><small>Температура</small><b>${fmt(v.tmin)}…${fmt(v.tmax)} °C</b></div><div class="card"><small>Ветер</small><b>${fmt(v.wind,1)} м/с</b><small>до ${fmt(v.wmax,1)}</small></div><div class="card"><small>Давление ${tr}</small><b>${fmt(v.p)}</b><small>мм рт. ст.</small></div></div>
+ <div class="card"><h3>Что влияет на клёв</h3>${Object.keys(F).map(k=>`<div class="fr"><span>${F[k].n}</span><em>${F[k].v(v)}</em><div class="bar"><u style="width:${d.f[k]*100}%;background:${col(d.f[k]*10)}"></u></div></div>`).join('')}
+ ${d.f[worst]<.6?`<p class="mut" style="margin:0">Главный минус: ${F[worst].n.toLowerCase()}.</p>`:''}</div>
+ <div class="card cc"><h3>Динамика за 11 дней</h3><div class="seg">${[['p','Давление, мм рт. ст.'],['t','Температура, °C'],['w','Ветер, м/с']].map(([k,l])=>`<button data-m="${k}" class="${k==mt?'on':''}">${l}</button>`).join('')}</div>${chart()}</div>
+ <div class="card hr"><h3>Лучшее время</h3><div class="chips">${best.map(r=>`<span style="border:1px solid ${col(r.bite)}">${String(r.hr).padStart(2,'0')}:00 · ${fmt(r.bite,1)}</span>`).join('')}</div>
+ <div class="hs"><div class="hc lg"><b>час</b><span>клёв</span><span>комфорт</span><span>°C</span><span>м/с</span><span>мм рт.</span></div>${hr}</div></div>`;
+ const t=$('#tabs .on');t&&t.scrollIntoView({inline:'center',block:'nearest'});
+ const n=$('.hc.now');if(n)$('.hs').scrollLeft=n.offsetLeft-120;
+}
+async function go(lat,lon,name){
+ $('#place').textContent=name;$('#main').innerHTML='<div class="card">Загружаю прогноз…</div>';
+ try{localStorage.setItem('loc',JSON.stringify([lat,lon,name]))}catch(e){}
+ try{
+  const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,wind_speed_10m,pressure_msl,cloud_cover,precipitation,weather_code&daily=sunrise,sunset&past_days=4&forecast_days=8&wind_speed_unit=ms&timezone=auto`);
+  if(!r.ok)throw 0;build(await r.json());
+ }catch(e){$('#main').innerHTML='<div class="card">Не удалось получить погоду. Проверьте интернет и попробуйте ещё раз.</div>'}
+}
+$('#sf').onsubmit=async e=>{
+ e.preventDefault();const q=$('#q').value.trim();if(!q)return;
+ try{
+  const j=await(await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=ru`)).json();
+  RS=j.results||[];
+  if(RS.length){
+   const c=RS[0];go(c.latitude,c.longitude,c.name+(c.admin1?', '+c.admin1:''));
+   $('#res').innerHTML=RS.length>1?'<span class="mut">Другие варианты:</span>'+RS.slice(1).map((c,i)=>`<button data-r="${i+1}">${c.name}${c.admin1?', '+c.admin1:''}</button>`).join(''):'';
+  }else $('#res').innerHTML='<span class="mut">Ничего не найдено. Проверьте название.</span>';
+ }catch(x){$('#res').innerHTML='<span class="mut">Поиск недоступен. Проверьте интернет.</span>'}
+};
+$('#geo').onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>go(p.coords.latitude,p.coords.longitude,'Моё местоположение'),()=>{$('#res').innerHTML='<span class="mut">Нет доступа к геолокации. Введите город вручную.</span>'}):0;
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.i!=null){sel=+b.dataset.i;render()}
+ else if(b.dataset.m){metric=b.dataset.m;render()}
+ else if(b.dataset.r!=null){const c=RS[+b.dataset.r];$('#res').innerHTML='';go(c.latitude,c.longitude,c.name+(c.admin1?', '+c.admin1:''))}
+});
+let L=[55.7558,37.6173,'Москва'];try{L=JSON.parse(localStorage.getItem('loc'))||L}catch(e){}
+go(...L);
+</script></body></html>
