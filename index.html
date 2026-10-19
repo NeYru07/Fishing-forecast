@@ -228,6 +228,12 @@ function build(j){
  const h=j.hourly,off=j.utc_offset_seconds*1000,dl=j.daily,SR={},SS={},by={};
  const elev=j.elevation||0,pNorm=760*Math.exp(-elev/8430)+pOffset;
  dl.time.forEach((d,i)=>{SR[d]=Date.parse(dl.sunrise[i]+'Z');SS[d]=Date.parse(dl.sunset[i]+'Z')});
+ 
+ // ИСПРАВЛЕНИЕ: Защита от null в конце прогноза (заполняем пустоты последним известным значением)
+ Object.keys(h).forEach(k=>{
+  if(Array.isArray(h[k])) for(let i=1;i<h[k].length;i++) if(h[k][i]==null) h[k][i]=h[k][i-1];
+ });
+
  const T=h.temperature_2m,P=h.surface_pressure||h.pressure_msl;
  
  h.time.forEach((s,i)=>{
